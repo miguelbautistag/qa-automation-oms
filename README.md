@@ -22,8 +22,8 @@ A high-concurrency automation ecosystem designed for the 2026 Agentic Testing la
 
 ## 🛠 Setup & Execution
 1. **Environment:** `source venv/bin/activate && pip install -r requirements.txt`
-2. **Database:** `sudo -u postgres psql -f data/seed_market.sql`
-3. **Run Suite:** `pytest tests/test_orders.py --html=report.html`
+2. **Database:** `sudo -u postgres psql -d trade_db -f data/seed_market.sql`
+3. **Run Suite:** `pytest tests/ui/test_orders.py`
 
 ## 🤖 AI-Agent Integration (Gemini Architect)
 This framework is mentored by a custom **AI/QA Architect**. 
@@ -35,3 +35,10 @@ Aligned with `JAVA_TRANSITION_MAP.csv`, this Python logic maps 1:1 to:
 - **Pytest** ➡️ **TestNG / JUnit 5**
 - **Playwright (Py)** ➡️ **Playwright (Java)**
 - **Psycopg2** ➡️ **JDBC / Spring Data JPA**
+
+## 📊 Tech Stack
+- **Language:** Python 3.13
+- **UI Engine:** Playwright
+- **Database:** PostgreSQL 16
+- **Infrastructure:** GitHub Actions / Docker
+- **Reporting:** pytest-html + Playwright Traces
