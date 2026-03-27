@@ -1,0 +1,74 @@
+name: UliteTrade Regional Integration CI
+
+# 2026 Standard: Opt-in to Node 24 for all actions to avoid deprecation errors
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  automation-suite:
+    runs-on: ubuntu-latest
+    
+    # Architectural Pillar: DATA INTEGRITY (PostgreSQL Service Container)
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: trade_db
+          POSTGRES_PASSWORD: admin123
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: 1. Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 2. Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: 3. Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          playwright install --with-deps chromium
+
+      - name: 4. Debug Directory Structure (Infrastructure Check)
+        run: ls -R
+
+      - name: 5. Seed Database (Data Integrity)
+        env:
+          PGPASSWORD: admin123
+        run: |
+          # The path remains 'data/' as it is in the project root
+          psql -h localhost -U postgres -d trade_db -f data/seed_market.sql
+
+      - name: 6. Execute UI & SQL Tests
+        env:
+          DB_HOST: localhost
+          DB_NAME: trade_db
+          DB_USER: postgres
+          DB_PASS: admin123
+          # PILLAR: Infrastructure - Critical so 'from pages.x' finds 'src/pages/x'
+          PYTHONPATH: src  
+        # FIXED: Path updated to tests/ui/ and removed invalid --headless flag
+        run: pytest tests/ui/test_orders.py -v --html=reports/report.html --self-contained-html
+
+      - name: 7. Upload Execution Artifacts (Observability)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa-automation-report
+          # Matches the report path defined in Step 6
+          path: reports/
